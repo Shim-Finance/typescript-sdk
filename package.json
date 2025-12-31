@@ -16,8 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "pnpm run build"
+    "build": "tsc"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.9.0"
