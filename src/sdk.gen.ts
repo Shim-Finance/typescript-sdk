@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { InstitutionsListData, InstitutionsListErrors, InstitutionsListResponses } from './types.gen';
+import type { AccountsListData, AccountsListErrors, AccountsListResponses, InstitutionsListData, InstitutionsListErrors, InstitutionsListResponses, TransactionsListData, TransactionsListErrors, TransactionsListResponses, TransactionsSyncData, TransactionsSyncErrors, TransactionsSyncResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -21,6 +21,195 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 /**
  * List institutions
  *
- * Returns all connected financial institutions for the authenticated user
+ * Returns all connected financial institutions for the authenticated user.
+ *
+ * Each institution represents a bank or financial institution that you've connected via Plaid Link.
+ *
+ * **Example Request:**
+ *
+ * ```bash
+ * curl https://api.shim.finance/v1/institutions \
+ * -H "Authorization: Bearer sk_live_YOUR_API_KEY"
+ * ```
+ *
+ * **Example Response:**
+ *
+ * ```json
+ * [
+ * {
+ * "id": "plaid_xxxxxx",
+ * "institutionId": "ins_1",
+ * "institutionName": "Chase",
+ * "status": "healthy",
+ * "lastSyncedAt": "2026-01-25T10:30:00Z",
+ * "createdAt": "2026-01-20T08:15:00Z"
+ * }
+ * ]
+ * ```
  */
-export const institutionsList = <ThrowOnError extends boolean = false>(options?: Options<InstitutionsListData, ThrowOnError>) => (options?.client ?? client).get<InstitutionsListResponses, InstitutionsListErrors, ThrowOnError>({ url: '/api/v1/institutions', ...options });
+export const institutionsList = <ThrowOnError extends boolean = false>(options?: Options<InstitutionsListData, ThrowOnError>) => (options?.client ?? client).get<InstitutionsListResponses, InstitutionsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/institutions',
+    ...options
+});
+
+/**
+ * List accounts
+ *
+ * Returns all bank accounts across all connected institutions for the authenticated user.
+ *
+ * Each account represents a checking, savings, credit card, or other financial account.
+ *
+ * **Example Request:**
+ *
+ * ```bash
+ * curl https://api.shim.finance/v1/accounts \
+ * -H "Authorization: Bearer sk_live_YOUR_API_KEY"
+ * ```
+ *
+ * **Example Response:**
+ *
+ * ```json
+ * [
+ * {
+ * "id": "account_xxxxxx",
+ * "institutionId": "plaid_xxxxxx",
+ * "name": "Checking",
+ * "officialName": "Chase Total Checking",
+ * "type": "depository",
+ * "subtype": "checking",
+ * "mask": "1234",
+ * "createdAt": "2026-01-20T08:15:00Z"
+ * }
+ * ]
+ * ```
+ */
+export const accountsList = <ThrowOnError extends boolean = false>(options?: Options<AccountsListData, ThrowOnError>) => (options?.client ?? client).get<AccountsListResponses, AccountsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/accounts',
+    ...options
+});
+
+/**
+ * List transactions
+ *
+ * Returns transactions across all connected accounts for the authenticated user, with optional filtering and pagination.
+ *
+ * **Filtering:**
+ * - `accountId` — filter to a specific account
+ * - `startDate` / `endDate` — filter by transaction date (YYYY-MM-DD, inclusive)
+ *
+ * **Pagination:**
+ * - `limit` — max results per page (default: 100, max: 500)
+ * - `offset` — number of results to skip
+ *
+ * **Example Request:**
+ *
+ * ```bash
+ * curl "https://api.shim.finance/v1/transactions?startDate=2026-01-01&limit=50" \
+ * -H "Authorization: Bearer sk_live_YOUR_API_KEY"
+ * ```
+ *
+ * **Example Response:**
+ *
+ * ```json
+ * {
+ * "data": [
+ * {
+ * "id": "txn_abc123",
+ * "accountId": "account_xyz",
+ * "amount": 42.50,
+ * "pending": false,
+ * "date": "2026-01-15",
+ * "authorizedDate": "2026-01-14",
+ * "name": "AMAZON.COM*MK1AB2CD3",
+ * "merchant": {
+ * "name": "Amazon",
+ * "logoUrl": "https://plaid-merchant-logos.plaid.com/amazon.png",
+ * "website": "amazon.com"
+ * },
+ * "location": null,
+ * "category": {
+ * "primary": "GENERAL_MERCHANDISE",
+ * "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+ * },
+ * "paymentChannel": "online",
+ * "currencyCode": "USD",
+ * "createdAt": "2026-01-15T10:30:00Z"
+ * }
+ * ],
+ * "total": 1250,
+ * "limit": 50,
+ * "offset": 0
+ * }
+ * ```
+ */
+export const transactionsList = <ThrowOnError extends boolean = false>(options?: Options<TransactionsListData, ThrowOnError>) => (options?.client ?? client).get<TransactionsListResponses, TransactionsListErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/transactions',
+    ...options
+});
+
+/**
+ * Sync transactions
+ *
+ * Returns transaction changes since the last sync cursor.
+ *
+ * **Initial sync (no cursor):**
+ * Omit the `cursor` parameter to get all current transactions as `added`.
+ *
+ * **Incremental sync:**
+ * Pass the `cursor` from a previous response to get only changes since then.
+ *
+ * **Response fields:**
+ * - `added` — newly created transactions
+ * - `modified` — updated transactions (full object, latest state)
+ * - `removed` — deleted transaction IDs
+ * - `cursor` — pass this to the next sync call
+ * - `hasMore` — if true, call again with the returned cursor to get remaining changes
+ *
+ * **Example Request:**
+ *
+ * ```bash
+ * # Initial sync
+ * curl "https://api.shim.finance/v1/transactions/sync" \
+ * -H "Authorization: Bearer sk_live_YOUR_API_KEY"
+ *
+ * # Incremental sync
+ * curl "https://api.shim.finance/v1/transactions/sync?cursor=42" \
+ * -H "Authorization: Bearer sk_live_YOUR_API_KEY"
+ * ```
+ *
+ * **Example Response:**
+ *
+ * ```json
+ * {
+ * "added": [
+ * {
+ * "id": "txn_abc123",
+ * "accountId": "account_xyz",
+ * "amount": 42.50,
+ * "pending": false,
+ * "date": "2026-01-15",
+ * "name": "AMAZON.COM*MK1AB2CD3",
+ * "merchant": { "name": "Amazon", "logoUrl": null, "website": "amazon.com" },
+ * "location": null,
+ * "category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" },
+ * "paymentChannel": "online",
+ * "currencyCode": "USD",
+ * "authorizedDate": "2026-01-14",
+ * "createdAt": "2026-01-15T10:30:00Z"
+ * }
+ * ],
+ * "modified": [],
+ * "removed": [],
+ * "cursor": "42",
+ * "hasMore": false
+ * }
+ * ```
+ */
+export const transactionsSync = <ThrowOnError extends boolean = false>(options?: Options<TransactionsSyncData, ThrowOnError>) => (options?.client ?? client).get<TransactionsSyncResponses, TransactionsSyncErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/transactions/sync',
+    ...options
+});

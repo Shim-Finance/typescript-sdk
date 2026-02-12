@@ -60,11 +60,91 @@ export type InternalError = {
     _tag: 'InternalError';
 };
 
+export type Account = {
+    id: string;
+    institutionId: string;
+    name: string;
+    officialName: string | null;
+    type: string;
+    subtype: string | null;
+    mask: string | null;
+    createdAt: DateTimeUtc;
+};
+
+/**
+ * a string to be decoded into a number
+ */
+export type NumberFromString = string;
+
+export type TransactionListResponse = {
+    data: Array<Transaction>;
+    total: number;
+    limit: number;
+    offset: number;
+};
+
+export type Transaction = {
+    id: string;
+    accountId: string;
+    amount: number;
+    pending: boolean;
+    /**
+     * Transaction date (YYYY-MM-DD)
+     */
+    date: string;
+    authorizedDate: string | null;
+    name: string | null;
+    merchant: TransactionMerchant | null;
+    location: TransactionLocation | null;
+    category: TransactionCategory | null;
+    paymentChannel: 'online' | 'in store' | 'other' | null;
+    currencyCode: string | null;
+    createdAt: DateTimeUtc;
+};
+
+export type TransactionMerchant = {
+    name: string | null;
+    logoUrl: string | null;
+    website: string | null;
+};
+
+export type TransactionLocation = {
+    address: string | null;
+    city: string | null;
+    region: string | null;
+    postalCode: string | null;
+    country: string | null;
+    lat: number | null;
+    lon: number | null;
+};
+
+export type TransactionCategory = {
+    primary: string;
+    detailed: string;
+};
+
+export type TransactionSyncResponse = {
+    added: Array<Transaction>;
+    modified: Array<Transaction>;
+    removed: Array<RemovedTransaction>;
+    cursor: string;
+    hasMore: boolean;
+};
+
+export type RemovedTransaction = {
+    id: string;
+};
+
+export type BadRequest = {
+    message: string;
+    _tag: 'BadRequest';
+};
+
 export type InstitutionsListData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/institutions';
+    url: '/v1/institutions';
 };
 
 export type InstitutionsListErrors = {
@@ -92,3 +172,128 @@ export type InstitutionsListResponses = {
 };
 
 export type InstitutionsListResponse = InstitutionsListResponses[keyof InstitutionsListResponses];
+
+export type AccountsListData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/accounts';
+};
+
+export type AccountsListErrors = {
+    /**
+     * The request did not match the expected schema
+     */
+    400: HttpApiDecodeError;
+    /**
+     * Unauthorized
+     */
+    401: Unauthorized;
+    /**
+     * InternalError
+     */
+    500: InternalError;
+};
+
+export type AccountsListError = AccountsListErrors[keyof AccountsListErrors];
+
+export type AccountsListResponses = {
+    /**
+     * Success
+     */
+    200: Array<Account>;
+};
+
+export type AccountsListResponse = AccountsListResponses[keyof AccountsListResponses];
+
+export type TransactionsListData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Filter by account ID
+         */
+        accountId?: string;
+        /**
+         * Inclusive start date (YYYY-MM-DD)
+         */
+        startDate?: string;
+        /**
+         * Inclusive end date (YYYY-MM-DD)
+         */
+        endDate?: string;
+        /**
+         * Max results per page (default 100, max 500)
+         */
+        limit?: NumberFromString;
+        /**
+         * Number of results to skip for pagination
+         */
+        offset?: NumberFromString;
+    };
+    url: '/v1/transactions';
+};
+
+export type TransactionsListErrors = {
+    /**
+     * The request did not match the expected schema
+     */
+    400: HttpApiDecodeError;
+    /**
+     * Unauthorized
+     */
+    401: Unauthorized;
+    /**
+     * InternalError
+     */
+    500: InternalError;
+};
+
+export type TransactionsListError = TransactionsListErrors[keyof TransactionsListErrors];
+
+export type TransactionsListResponses = {
+    /**
+     * TransactionListResponse
+     */
+    200: TransactionListResponse;
+};
+
+export type TransactionsListResponse = TransactionsListResponses[keyof TransactionsListResponses];
+
+export type TransactionsSyncData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sync cursor from a previous response. Omit for initial sync.
+         */
+        cursor?: string;
+    };
+    url: '/v1/transactions/sync';
+};
+
+export type TransactionsSyncErrors = {
+    /**
+     * The request did not match the expected schema
+     */
+    400: HttpApiDecodeError | BadRequest;
+    /**
+     * Unauthorized
+     */
+    401: Unauthorized;
+    /**
+     * InternalError
+     */
+    500: InternalError;
+};
+
+export type TransactionsSyncError = TransactionsSyncErrors[keyof TransactionsSyncErrors];
+
+export type TransactionsSyncResponses = {
+    /**
+     * TransactionSyncResponse
+     */
+    200: TransactionSyncResponse;
+};
+
+export type TransactionsSyncResponse = TransactionsSyncResponses[keyof TransactionsSyncResponses];
