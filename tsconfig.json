@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "rewriteRelativeImportExtensions": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "lib": [
       "ES2022",
-      "DOM"
+      "DOM",
+      "DOM.Iterable"
     ],
     "strict": true,
     "esModuleInterop": true,

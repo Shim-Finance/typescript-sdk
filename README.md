@@ -37,25 +37,6 @@ const transactions = await transactionsList({
 });
 ```
 
-## Custom Client
-
-Use `createClient` if you need multiple clients or custom configuration:
-
-```typescript
-import { createClient, createConfig, transactionsSync } from '@shim-finance/typescript-sdk';
-
-const myClient = createClient(
-  createConfig({
-    baseUrl: 'https://api.shim.finance',
-    headers: {
-      Authorization: 'Bearer sk_live_YOUR_API_KEY',
-    },
-  })
-);
-
-const { data } = await transactionsSync({ client: myClient });
-```
-
 ## Error Handling
 
 All SDK functions return `{ data, error }`. Check `error` before using `data`:
